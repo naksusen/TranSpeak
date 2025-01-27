@@ -23,7 +23,6 @@ def translate_text(text, target_language):
             'dutch': 'nl',
             'greek': 'el',
             'gujarati': 'gu',
-            'hindi': 'hi',
             'indonesian': 'id',
             'thai': 'th',
             'turkish': 'tr',
@@ -159,28 +158,33 @@ class WelcomePage(ft.Container):
         super().__init__(expand=True)
         self.switch_to_main = switch_to_main
 
-        main_content = ft.Column(
-            controls=[
-                ft.Text(
-                    "T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲",
-                    size=30,
-                    weight=ft.FontWeight.BOLD,
-                    color="#c2926a",
-                    text_align=ft.TextAlign.CENTER,
-                    font_family="Roboto",
-                ),
-                ft.Container(height=20),  
-                ft.ElevatedButton(
-                    text="Start",
-                    bgcolor="#c2926a",
-                    color="#ffffff",
-                    on_click=self.handle_start,
-                    width=200,
-                    height=50,
-                ),
-            ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            alignment=ft.MainAxisAlignment.CENTER,
+        main_content = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲",
+                        size=30,
+                        weight=ft.FontWeight.BOLD,
+                        color="#c2926a",
+                        text_align=ft.TextAlign.CENTER,
+                        font_family="Roboto",
+                    ),
+                    ft.Container(height=20),
+                    ft.ElevatedButton(
+                        text="Start",
+                        bgcolor="#c2926a",
+                        color="#ffffff",
+                        on_click=self.handle_start,
+                        width=200,
+                        height=50,
+                    ),
+                ],
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                expand=True
+            ),
+            alignment=ft.alignment.center,
+            expand=True
         )
 
         footer = ft.Container(
@@ -203,21 +207,17 @@ class WelcomePage(ft.Container):
                 horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                 spacing=2,
             ),
-            padding=20,
-            alignment=ft.alignment.center,
+            padding=ft.padding.symmetric(vertical=20),
         )
 
         self.content = ft.Column(
             controls=[
-                ft.Container(
-                    content=main_content,
-                    expand=True, 
-                    alignment=ft.alignment.center,  
-                ),
-                footer, 
+                main_content,
+                footer,
             ],
-            alignment=ft.MainAxisAlignment.SPACE_BETWEEN, 
-            expand=True,  
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN,
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            expand=True,
         )
 
     def handle_start(self, e):
@@ -428,7 +428,7 @@ def main(page: ft.Page) -> None:
 
         title_container = ft.Container(
             content=ft.Text(
-                "T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲",
+                "T̲̲r̲a̲̲n̲̲S̲̲p̲e̲a̲̲k̲",
                 size=30,
                 weight=ft.FontWeight.BOLD,
                 color="#c2926a",

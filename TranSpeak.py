@@ -2,7 +2,6 @@ import flet as ft
 from deep_translator import GoogleTranslator
 import pyttsx3
 
-# para ma-translate yung text sa target language using google translate API
 def translate_text(text, target_language):
     try:
         language_map = {
@@ -106,9 +105,7 @@ def translate_text(text, target_language):
             'zulu': 'zu'
         }
         
-        # Convert the target language to lowercase and get the corresponding code
         target_code = language_map.get(target_language.lower(), target_language.lower())
-        
         translator = GoogleTranslator(source='auto', target=target_code)
         return translator.translate(text)
     except Exception as e:
@@ -118,105 +115,164 @@ def translate_text(text, target_language):
 def speak_text(text, lang):
     try:
         engine = pyttsx3.init()
-        engine.setProperty('rate', 150)  
-        engine.setProperty('voice', f'{lang}mbrola')  
+        engine.setProperty('rate', 150)
+        engine.setProperty('voice', f'{lang}mbrola')
         engine.say(text)
         engine.runAndWait()
     except Exception as e:
         print(f"Error speaking text: {e}")
 
-# class ng main content area with a chat ListView
 class MainContentArea(ft.Container):
     def __init__(self, dark_mode=False) -> None:
-        self.dark_mode = dark_mode
         super().__init__(
-            width=320,
-            height=400,
+            width=600,
+            expand=True, 
             bgcolor="#d5cdc4",
-            border_radius=10,
-            padding=10,
+            border_radius=15,
+            padding=20,
+            margin=ft.margin.symmetric(vertical=10),
+            border=ft.border.all(1, "#c2926a"),
         )
+        self.dark_mode = dark_mode
         self.chat = ft.ListView(
             expand=True,
-            height=130,
-            spacing=10,
-            auto_scroll=True
+            spacing=15,
+            auto_scroll=True,
+            height=400  
         )
         self.content = self.chat
 
-    # method para mag-set ng dark mode for the main content area
     def set_dark_mode(self, dark_mode):
         self.dark_mode = dark_mode
+        self.bgcolor = "#2d2d2d" if dark_mode else "#d5cdc4"
         self.update_text_color()
 
-    # method din ito para i-update ang text color based sa dark mode
     def update_text_color(self):
-        text_color = "#000000" if self.dark_mode else "#ffffff"
+        text_color = "#ffffff" if self.dark_mode else "#000000"
         for control in self.chat.controls:
             if isinstance(control, CreateMessage):
                 control.text.color = text_color
         self.update()
 
-# class ng message sa chat with specified attributes
 class CreateMessage(ft.Column):
     def __init__(self, name: str, message: str, lang: str, spoken_text: str, dark_mode=False) -> None:
-        self.name: str = name
-        self.message: str = message
-        self.lang: str = lang
-        self.spoken_text: str = spoken_text
-        self.text_color = "#000000"
-        self.text = ft.Text(self.message, color=self.text_color)
-        super().__init__(spacing=2)
-        self.controls = [ft.Text(self.name, opacity=0.6, color=self.text_color), self.text]
+        super().__init__(spacing=5)
+        self.name = name
+        self.message = message
+        self.lang = lang
+        self.spoken_text = spoken_text
+        self.text_color = "#ffffff" if dark_mode else "#000000"
+        self.text = ft.Text(self.message, color=self.text_color, size=14, selectable=True)
+        
+        self.controls = [
+            ft.Text(self.name, 
+                   size=16,
+                   opacity=0.8,
+                   color=self.text_color,
+                   weight=ft.FontWeight.BOLD),
+            self.text
+        ]
 
-    # method para i-set ang dark mode for the message
-    def set_dark_mode(self, dark_mode):
-        pass
-
-# class sa prompt input field with language and text output animation methods
-class Prompt(ft.TextField):
+class Prompt(ft.Column):
     def __init__(self, appbar: ft.AppBar, main_area: MainContentArea) -> None:
-        super().__init__(width=320, height=30, border_color="#c2926a", content_padding=5, cursor_color="#c2926a", on_submit=self.run_prompt)
+        super().__init__()
         self.appbar = appbar
         self.main_area = main_area
-        self.lang_prompt = ft.TextField(width=100, height=40, cursor_height=20, content_padding=5, on_submit=self.update_language)
+        
+        self.text_field = ft.TextField(
+            width=400,
+            height=45,
+            border_color="#c2926a",
+            border_width=2,
+            content_padding=10,
+            cursor_color="#c2926a",
+            hint_text="Enter text to translate...",
+            bgcolor="#ffffff",
+            focused_border_color="#a06d47",
+        )
+        
+        self.lang_field = ft.TextField(
+            width=150,
+            height=45,
+            border_width=2,
+            cursor_height=20,
+            content_padding=10,
+            hint_text="Enter language...",
+            bgcolor="#ffffff",
+            border_color="#c2926a",
+            focused_border_color="#a06d47",
+        )
+        
+        self.translate_button = ft.ElevatedButton(
+            text="Translate",
+            bgcolor="#c2926a",
+            color="#ffffff",
+            on_click=self.run_prompt,
+            height=45,
+        )
 
-    def update_language(self, event):
-        lang = self.lang_prompt.value.lower()
-        self.lang_prompt.value = lang
+        self.controls = [
+            ft.Row(
+                controls=[
+                    self.lang_field,
+                    ft.Container(width=10),
+                    self.text_field,
+                    ft.Container(width=10),
+                    self.translate_button
+                ],
+                alignment=ft.MainAxisAlignment.CENTER
+            )
+        ]
 
-    # method para sa animate text output sa chat based ng user input
     def animate_text_output(self, name: str, prompt: str):
-        lang = self.lang_prompt.value.lower()
-        if not lang:
-            lang = 'en'  
-            
+        lang = self.lang_field.value.lower() if self.lang_field.value else 'en'
         translated_text = translate_text(prompt, lang)
         spoken_text = speak_text(translated_text, lang)
-        user_msg = CreateMessage(name="You:", message=prompt, lang=lang, spoken_text=spoken_text, dark_mode=self.main_area.dark_mode)
+        
+        user_msg = CreateMessage(
+            name="You:", 
+            message=prompt, 
+            lang=lang, 
+            spoken_text=spoken_text, 
+            dark_mode=self.main_area.dark_mode
+        )
         self.main_area.chat.controls.append(user_msg)
 
-        translated_msg = CreateMessage(name="Translated Text:", message=translated_text, lang=lang, spoken_text=spoken_text, dark_mode=self.main_area.dark_mode)
+        translated_msg = CreateMessage(
+            name="Translated Text:", 
+            message=translated_text, 
+            lang=lang, 
+            spoken_text=spoken_text, 
+            dark_mode=self.main_area.dark_mode
+        )
         self.main_area.chat.controls.append(translated_msg)
-
         self.main_area.chat.update()
 
-    # method para i-handle yung prompt input at mag-initiate ng text animation
-    def run_prompt(self, event):
-        text = event.control.value
-        self.animate_text_output(name="You:", prompt=text)
-        self.value = ""
-        self.lang_prompt.value = ""
-        self.update()
+    def run_prompt(self, e):
+        if self.text_field.value:
+            self.animate_text_output(name="You:", prompt=self.text_field.value)
+            self.text_field.value = ""
+            self.lang_field.value = ""
+            self.text_field.update()
+            self.lang_field.update()
 
-# ito yung main function para i-set up yung application UI at mag-handle ng events
 def main(page: ft.Page) -> None:
+    page.window_width = 800
+    page.window_height = 700
+    page.padding = 20
+    page.bgcolor = "#ffffff"
+    page.scroll = "auto"  
+    
     appbar = ft.AppBar(
-        title=ft.Text(str("ᴛʀᴀɴꜱᴘᴇᴀᴋ"), size=23), # nag-install din pala ako ng pywhatkit module here, para sa text manipulation, kaya pwede nang mag-input ng generated fonts para maangas HAHAHA
-        center_title=False,
-        bgcolor=ft.colors.SURFACE_VARIANT,
+        title=ft.Text("TRANSPEAK", size=30, weight=ft.FontWeight.BOLD),
+        center_title=True,
+        bgcolor="#c2926a",
         actions=[
-            ft.IconButton(ft.icons.WB_SUNNY_OUTLINED, on_click=lambda e: toggle_theme(page, appbar, main_area)),
+            ft.IconButton(
+                ft.icons.WB_SUNNY_OUTLINED, 
+                on_click=lambda e: toggle_theme(page, appbar, main_area),
+                icon_color="#ffffff"
+            ),
             ft.PopupMenuButton(
                 items=[
                     ft.PopupMenuItem(text="Log Out", on_click=lambda e: logout_action()),
@@ -228,56 +284,86 @@ def main(page: ft.Page) -> None:
     main_area = MainContentArea()
     prompt = Prompt(appbar=appbar, main_area=main_area)
 
-    page.appbar = appbar
+    title_container = ft.Container(
+        content=ft.Text(
+            "TranSpeak",
+            size=40,
+            weight=ft.FontWeight.BOLD,
+            color="#c2926a",
+            text_align=ft.TextAlign.CENTER,
+        ),
+        margin=ft.margin.only(bottom=10, top=10),
+        alignment=ft.alignment.center
+    )
 
-    page.horizontal_alignment = "center"
-    page.vertical_alignment = "center"
-    page.theme_mode = "light"
-
-    created_by_text = ft.Text("𝗖𝗿𝗲𝗮𝘁𝗲𝗱 𝗯𝘆: ᴊᴀɴᴇᴛ ᴍ. ʙᴜʟᴀᴏ | 𝖢𝖲 3-1", size=12, weight="w500")
-    footer = ft.Container(
-        content=created_by_text,
-        bgcolor=ft.colors.SURFACE_VARIANT,
+    input_container = ft.Container(
+        content=prompt,
+        margin=ft.margin.only(top=10, bottom=10),
         padding=10,
+        bgcolor="#f0f0f0",
+        border_radius=10,
+        border=ft.border.all(1, "#c2926a")
     )
 
-    page.add(
-        ft.Text(str("̲T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲"), size=30, weight="w900"),
-        main_area,
-        ft.Divider(height=4, color="transparent"),
-        prompt.lang_prompt,
-        prompt,
-        footer,
+    footer = ft.Container(
+        content=ft.Column(
+            controls=[
+                ft.Text(
+                    "Created by:",
+                    size=16,
+                    weight=ft.FontWeight.BOLD,
+                    color="#c2926a"
+                ),
+                ft.Text(
+                    "JANET M. BULAO | CS 3-1",
+                    size=14,
+                    color="#666666",
+                    weight=ft.FontWeight.BOLD
+                )
+            ],
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            spacing=5
+        ),
+        padding=15,
+        margin=ft.margin.only(top=10),
+        bgcolor="#f5f5f5",
+        border_radius=10,
+        border=ft.border.all(1, "#c2926a")
     )
 
-    update_created_by_text_color(created_by_text, page.theme_mode)
+    content = ft.Column(
+        controls=[
+            title_container,
+            main_area,
+            input_container,
+            footer
+        ],
+        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+        spacing=10,
+        scroll=ft.ScrollMode.AUTO  
+    )
 
+    page.appbar = appbar
+    page.add(content)
     page.update()
 
-# function para sa switching ng light at dark themes/ mode
 def toggle_theme(page, appbar, main_area):
     if page.theme_mode == "light":
         page.theme_mode = "dark"
+        page.bgcolor = "#1a1a1a"
+        appbar.bgcolor = "#2d2d2d"
         appbar.actions[0].icon = ft.icons.WB_SUNNY_OUTLINED
     else:
         page.theme_mode = "light"
+        page.bgcolor = "#ffffff"
+        appbar.bgcolor = "#c2926a"
         appbar.actions[0].icon = ft.icons.BRIGHTNESS_2_OUTLINED
 
     main_area.set_dark_mode(page.theme_mode == "dark")
-
-    update_created_by_text_color(page.controls[-1].content, page.theme_mode)
-
     page.update()
 
-# function para sa logout action
 def logout_action():
     print("Logout action triggered.")
 
-# function para i-update ang text color based sa theme mode
-def update_created_by_text_color(created_by_text, theme_mode):
-    text_color = "#ffffff" if theme_mode == "dark" else "#000000"
-    created_by_text.color = text_color
-
-# ito yung entry point para mag-start yung application/ GUI, yun lang HAHAHA maangas na 'to HAHAHA ayoko na, sabog na akoo HAHAHAHAHHAHA
 if __name__ == "__main__":
     ft.app(target=main, view=ft.AppView.WEB_BROWSER)

@@ -126,7 +126,7 @@ class MainContentArea(ft.Container):
     def __init__(self, dark_mode=False) -> None:
         super().__init__(
             width=600,
-            expand=True, 
+            expand=True,
             bgcolor="#d5cdc4",
             border_radius=15,
             padding=20,
@@ -138,7 +138,7 @@ class MainContentArea(ft.Container):
             expand=True,
             spacing=15,
             auto_scroll=True,
-            height=400  
+            height=400
         )
         self.content = self.chat
 
@@ -227,13 +227,12 @@ class Prompt(ft.Column):
     def animate_text_output(self, name: str, prompt: str):
         lang = self.lang_field.value.lower() if self.lang_field.value else 'en'
         translated_text = translate_text(prompt, lang)
-        spoken_text = speak_text(translated_text, lang)
         
         user_msg = CreateMessage(
             name="You:", 
             message=prompt, 
             lang=lang, 
-            spoken_text=spoken_text, 
+            spoken_text="", 
             dark_mode=self.main_area.dark_mode
         )
         self.main_area.chat.controls.append(user_msg)
@@ -242,11 +241,13 @@ class Prompt(ft.Column):
             name="Translated Text:", 
             message=translated_text, 
             lang=lang, 
-            spoken_text=spoken_text, 
+            spoken_text="", 
             dark_mode=self.main_area.dark_mode
         )
         self.main_area.chat.controls.append(translated_msg)
         self.main_area.chat.update()
+        
+        speak_text(translated_text, lang)
 
     def run_prompt(self, e):
         if self.text_field.value:
@@ -261,7 +262,7 @@ def main(page: ft.Page) -> None:
     page.window_height = 700
     page.padding = 20
     page.bgcolor = "#ffffff"
-    page.scroll = "auto"  
+    page.scroll = "auto"
     
     appbar = ft.AppBar(
         title=ft.Text("TRANSPEAK", size=30, weight=ft.FontWeight.BOLD),
@@ -340,7 +341,7 @@ def main(page: ft.Page) -> None:
         ],
         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
         spacing=10,
-        scroll=ft.ScrollMode.AUTO  
+        scroll=ft.ScrollMode.AUTO
     )
 
     page.appbar = appbar

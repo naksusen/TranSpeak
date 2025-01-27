@@ -1,14 +1,120 @@
 import flet as ft
-from googletrans import Translator
+from deep_translator import GoogleTranslator
 import pyttsx3
 
 # para ma-translate yung text sa target language using google translate API
 def translate_text(text, target_language):
-    translator = Translator()
-    translation = translator.translate(text, dest=target_language)
-    return translation.text
+    try:
+        language_map = {
+            'english': 'en',
+            'spanish': 'es',
+            'french': 'fr',
+            'german': 'de',
+            'italian': 'it',
+            'portuguese': 'pt',
+            'russian': 'ru',
+            'japanese': 'ja',
+            'korean': 'ko',
+            'chinese': 'zh',
+            'filipino': 'tl',
+            'tagalog': 'tl',
+            'arabic': 'ar',
+            'bengali': 'bn',
+            'dutch': 'nl',
+            'greek': 'el',
+            'gujarati': 'gu',
+            'hindi': 'hi',
+            'indonesian': 'id',
+            'thai': 'th',
+            'turkish': 'tr',
+            'ukrainian': 'uk',
+            'vietnamese': 'vi',
+            'tamil': 'ta',
+            'telugu': 'te',
+            'urdu': 'ur',
+            'persian': 'fa',
+            'polish': 'pl',
+            'romanian': 'ro',
+            'swedish': 'sv',
+            'malay': 'ms',
+            'kannada': 'kn',
+            'marathi': 'mr',
+            'afrikaans': 'af',
+            'albanian': 'sq',
+            'amharic': 'am',
+            'armenian': 'hy',
+            'azerbaijani': 'az',
+            'basque': 'eu',
+            'belarusian': 'be',
+            'cebuano': 'ceb',
+            'corsican': 'co',
+            'croatian': 'hr',
+            'czech': 'cs',
+            'danish': 'da',
+            'esperanto': 'eo',
+            'estonian': 'et',
+            'finnish': 'fi',
+            'frisian': 'fy',
+            'galician': 'gl',
+            'georgian': 'ka',
+            'haitian creole': 'ht',
+            'hawaiian': 'haw',
+            'hebrew': 'iw',
+            'hmong': 'hmn',
+            'hungarian': 'hu',
+            'icelandic': 'is',
+            'igbo': 'ig',
+            'irish': 'ga',
+            'javanese': 'jw',
+            'kazakh': 'kk',
+            'khmer': 'km',
+            'kurdish': 'ku',
+            'kyrgyz': 'ky',
+            'lao': 'lo',
+            'latin': 'la',
+            'latvian': 'lv',
+            'lithuanian': 'lt',
+            'luxembourgish': 'lb',
+            'macedonian': 'mk',
+            'malagasy': 'mg',
+            'maltese': 'mt',
+            'maori': 'mi',
+            'mongolian': 'mn',
+            'myanmar': 'my',
+            'nepali': 'ne',
+            'norwegian': 'no',
+            'nyanja': 'ny',
+            'pashto': 'ps',
+            'punjabi': 'pa',
+            'samoan': 'sm',
+            'scots gaelic': 'gd',
+            'serbian': 'sr',
+            'sesotho': 'st',
+            'shona': 'sn',
+            'sindhi': 'sd',
+            'sinhala': 'si',
+            'slovak': 'sk',
+            'slovenian': 'sl',
+            'somali': 'so',
+            'sundanese': 'su',
+            'swahili': 'sw',
+            'tajik': 'tg',
+            'welsh': 'cy',
+            'xhosa': 'xh',
+            'yiddish': 'yi',
+            'yoruba': 'yo',
+            'zulu': 'zu'
+        }
+        
+        # Convert the target language to lowercase and get the corresponding code
+        target_code = language_map.get(target_language.lower(), target_language.lower())
+        
+        translator = GoogleTranslator(source='auto', target=target_code)
+        return translator.translate(text)
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return f"Translation error: Please use a valid language code or name. Error: {str(e)}"
 
-# speak the given text sa specified language gamit ang pyttsx3 text-to-speech engine
 def speak_text(text, lang):
     try:
         engine = pyttsx3.init()
@@ -75,14 +181,16 @@ class Prompt(ft.TextField):
         self.main_area = main_area
         self.lang_prompt = ft.TextField(width=100, height=40, cursor_height=20, content_padding=5, on_submit=self.update_language)
 
-    # method para i-update yung selected language
     def update_language(self, event):
         lang = self.lang_prompt.value.lower()
         self.lang_prompt.value = lang
 
     # method para sa animate text output sa chat based ng user input
     def animate_text_output(self, name: str, prompt: str):
-        lang = self.lang_prompt.value
+        lang = self.lang_prompt.value.lower()
+        if not lang:
+            lang = 'en'  
+            
         translated_text = translate_text(prompt, lang)
         spoken_text = speak_text(translated_text, lang)
         user_msg = CreateMessage(name="You:", message=prompt, lang=lang, spoken_text=spoken_text, dark_mode=self.main_area.dark_mode)

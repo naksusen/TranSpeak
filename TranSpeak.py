@@ -179,6 +179,18 @@ class Prompt(ft.Column):
         self.appbar = appbar
         self.main_area = main_area
         
+        self.lang_field = ft.TextField(
+            width=400,
+            height=45,
+            border_width=2,
+            cursor_height=20,
+            content_padding=10,
+            hint_text="Enter language...",
+            bgcolor="#ffffff",
+            border_color="#c2926a",
+            focused_border_color="#a06d47",
+        )
+        
         self.text_field = ft.TextField(
             width=400,
             height=45,
@@ -191,36 +203,27 @@ class Prompt(ft.Column):
             focused_border_color="#a06d47",
         )
         
-        self.lang_field = ft.TextField(
-            width=150,
-            height=45,
-            border_width=2,
-            cursor_height=20,
-            content_padding=10,
-            hint_text="Enter language...",
-            bgcolor="#ffffff",
-            border_color="#c2926a",
-            focused_border_color="#a06d47",
-        )
-        
         self.translate_button = ft.ElevatedButton(
             text="Translate",
             bgcolor="#c2926a",
             color="#ffffff",
             on_click=self.run_prompt,
+            width=400,
             height=45,
         )
 
         self.controls = [
-            ft.Row(
+            ft.Column(
                 controls=[
                     self.lang_field,
-                    ft.Container(width=10),
+                    ft.Container(height=10),  
                     self.text_field,
-                    ft.Container(width=10),
+                    ft.Container(height=10),  
                     self.translate_button
                 ],
-                alignment=ft.MainAxisAlignment.CENTER
+                alignment=ft.MainAxisAlignment.CENTER,
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=0
             )
         ]
 
@@ -287,7 +290,7 @@ def main(page: ft.Page) -> None:
 
     title_container = ft.Container(
         content=ft.Text(
-            "TranSpeak",
+            "T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲",
             size=40,
             weight=ft.FontWeight.BOLD,
             color="#c2926a",
@@ -310,26 +313,27 @@ def main(page: ft.Page) -> None:
         content=ft.Column(
             controls=[
                 ft.Text(
-                    "Created by:",
-                    size=16,
+                    "© 2025 TranSpeak. All Rights Reserved.",
+                    size=14,
                     weight=ft.FontWeight.BOLD,
-                    color="#c2926a"
+                    color="#666666"
                 ),
                 ft.Text(
-                    "JANET M. BULAO | CS 3-1",
+                    "Developed by Janet Bulao",
                     size=14,
-                    color="#666666",
-                    weight=ft.FontWeight.BOLD
+                    color="#666666"
+                ),
+                ft.Text(
+                    "Cavite State University - Bacoor City Campus",
+                    size=14,
+                    color="#666666"
                 )
             ],
             horizontal_alignment=ft.CrossAxisAlignment.CENTER,
             spacing=5
         ),
         padding=15,
-        margin=ft.margin.only(top=10),
-        bgcolor="#f5f5f5",
-        border_radius=10,
-        border=ft.border.all(1, "#c2926a")
+        margin=ft.margin.only(top=10)
     )
 
     content = ft.Column(

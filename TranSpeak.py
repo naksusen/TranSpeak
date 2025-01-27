@@ -154,52 +154,75 @@ def speak_text(text, lang):
     except Exception as e:
         print(f"Error speaking text: {e}")
 
-class WelcomePage(ft.Column):
+class WelcomePage(ft.Container):
     def __init__(self, switch_to_main):
-        super().__init__(
-            alignment=ft.MainAxisAlignment.CENTER,  
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER  
-        )
+        super().__init__(expand=True)
         self.switch_to_main = switch_to_main
-        
-        stack = ft.Stack(
+
+        main_content = ft.Column(
             controls=[
-                ft.Container(
-                    content=ft.Column(
-                        controls=[
-                            ft.Text(
-                                "T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲",
-                                size=30,
-                                weight=ft.FontWeight.BOLD,
-                                color="#c2926a",
-                                text_align=ft.TextAlign.CENTER,
-                                font_family="Roboto"
-                            ),
-                            ft.Container(height=20),  
-                            ft.ElevatedButton(
-                                text="Start",
-                                bgcolor="#c2926a",
-                                color="#ffffff",
-                                on_click=self.handle_start,
-                                width=200,
-                                height=50,
-                            )
-                        ],
-                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                        alignment=ft.MainAxisAlignment.CENTER,
-                        spacing=0,
-                    ),
-                    alignment=ft.alignment.center,
-                    expand=True
-                )
+                ft.Text(
+                    "T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲",
+                    size=30,
+                    weight=ft.FontWeight.BOLD,
+                    color="#c2926a",
+                    text_align=ft.TextAlign.CENTER,
+                    font_family="Roboto",
+                ),
+                ft.Container(height=20),  
+                ft.ElevatedButton(
+                    text="Start",
+                    bgcolor="#c2926a",
+                    color="#ffffff",
+                    on_click=self.handle_start,
+                    width=200,
+                    height=50,
+                ),
             ],
-            expand=True
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+            alignment=ft.MainAxisAlignment.CENTER,
         )
 
-        self.controls = [stack]
-    
+        footer = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "© 2025 TranSpeak. All Rights Reserved.",
+                        size=12,
+                        weight=ft.FontWeight.BOLD,
+                        color="#666666",
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                    ft.Text(
+                        "Developed by Janet Bulao",
+                        size=12,
+                        color="#666666",
+                        text_align=ft.TextAlign.CENTER,
+                    ),
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=2,
+            ),
+            padding=20,
+            alignment=ft.alignment.center,
+        )
+
+        self.content = ft.Column(
+            controls=[
+                ft.Container(
+                    content=main_content,
+                    expand=True, 
+                    alignment=ft.alignment.center,  
+                ),
+                footer, 
+            ],
+            alignment=ft.MainAxisAlignment.SPACE_BETWEEN, 
+            expand=True,  
+        )
+
     def handle_start(self, e):
         self.switch_to_main()
+
 class MainContentArea(ft.Container):
     def __init__(self, dark_mode=False) -> None:
         super().__init__(
@@ -240,26 +263,28 @@ class CreateMessage(ft.Column):
         self.spoken_text = spoken_text
         self.text_color = "#ffffff" if dark_mode else "#000000"
         
-        label_color = "#2196F3" if name == "You:" else "#9C27B0"
-        
+        label_color = (
+           "#c2926a" if name == "You:" else "#8B4513"  
+        )
+
         self.text = ft.Text(
-            self.message, 
-            color=self.text_color, 
-            size=14, 
+            self.message,
+            color=self.text_color,
+            size=14,
             selectable=True,
             width=None,
-            max_lines=None
+            max_lines=None,
         )
-        
+
         self.controls = [
             ft.Text(
-                self.name, 
+                self.name,
                 size=16,
                 opacity=1.0,
                 color=label_color,
-                weight=ft.FontWeight.BOLD
+                weight=ft.FontWeight.BOLD,
             ),
-            self.text
+            self.text,
         ]
 
 class Prompt(ft.Column):
@@ -300,20 +325,20 @@ class Prompt(ft.Column):
             bgcolor="#c2926a",
             color="#ffffff",
             on_click=self.run_prompt,
-            width=None,
+            width=200,
             height=35,
         )
 
         self.controls = [
             ft.ResponsiveRow(
-                controls=[
+                controls=[ 
                     ft.Column(
                         controls=[
                             self.lang_field,
-                            ft.Container(height=5),
+                            ft.Container(height=10),  
                             self.text_field,
-                            ft.Container(height=5),
-                            self.translate_button
+                            ft.Container(height=15),  
+                            self.translate_button 
                         ],
                         alignment=ft.MainAxisAlignment.CENTER,
                         horizontal_alignment=ft.CrossAxisAlignment.CENTER,
@@ -414,36 +439,6 @@ def main(page: ft.Page) -> None:
             alignment=ft.alignment.center
         )
 
-        footer = ft.Container(
-            content=ft.Column(
-                controls=[
-                    ft.Text(
-                        "© 2025 TranSpeak. All Rights Reserved.",
-                        size=12,
-                        weight=ft.FontWeight.BOLD,
-                        color="#666666",
-                        text_align=ft.TextAlign.CENTER
-                    ),
-                    ft.Text(
-                        "Developed by Janet Bulao",
-                        size=12,
-                        color="#666666",
-                        text_align=ft.TextAlign.CENTER
-                    ),
-                    ft.Text(
-                        "Cavite State University - Bacoor City Campus",
-                        size=12,
-                        color="#666666",
-text_align=ft.TextAlign.CENTER
-                    )
-                ],
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=2
-            ),
-            padding=5,
-            margin=ft.margin.only(top=20)
-        )
-
         prompt = Prompt(appbar=appbar, main_area=main_area)
 
         content = ft.ResponsiveRow(
@@ -453,7 +448,6 @@ text_align=ft.TextAlign.CENTER
                         title_container,
                         main_area,
                         prompt,
-                        footer
                     ],
                     horizontal_alignment=ft.CrossAxisAlignment.CENTER,
                     spacing=5,
@@ -468,7 +462,6 @@ text_align=ft.TextAlign.CENTER
         page.add(content)
         page.update()
     
-    # welcome page
     switch_to_welcome()
 
 def toggle_theme(page, appbar, main_area):

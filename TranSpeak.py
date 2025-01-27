@@ -16,6 +16,7 @@ def translate_text(text, target_language):
             'korean': 'ko',
             'chinese': 'zh',
             'filipino': 'tl',
+            'hindi': 'hi',
             'tagalog': 'tl',
             'arabic': 'ar',
             'bengali': 'bn',
@@ -112,33 +113,109 @@ def translate_text(text, target_language):
         print(f"Translation error: {e}")
         return f"Translation error: Please use a valid language code or name. Error: {str(e)}"
 
+def get_voice_for_language(engine, lang_code):
+    voices = engine.getProperty('voices')
+    
+    language_voice_map = {
+        'ja': ['ja', 'jp', 'japanese'],
+        'ko': ['ko', 'kr', 'korean'],
+        'zh': ['zh', 'cn', 'chinese'],
+        'es': ['es', 'spanish'],
+        'fr': ['fr', 'french'],
+        'de': ['de', 'german'],
+        'it': ['it', 'italian'],
+        'pt': ['pt', 'portuguese'],
+        'ru': ['ru', 'russian']
+    }
+    
+    search_terms = language_voice_map.get(lang_code.lower(), [lang_code.lower()])
+    
+    for voice in voices:
+        voice_name = voice.name.lower()
+        voice_id = voice.id.lower()
+        for term in search_terms:
+            if term in voice_name or term in voice_id:
+                return voice.id
+    
+    return voices[0].id if voices else None
+
 def speak_text(text, lang):
     try:
         engine = pyttsx3.init()
+        
         engine.setProperty('rate', 150)
-        engine.setProperty('voice', f'{lang}mbrola')
+        
+        voice_id = get_voice_for_language(engine, lang)
+        if voice_id:
+            engine.setProperty('voice', voice_id)
+        
         engine.say(text)
         engine.runAndWait()
     except Exception as e:
         print(f"Error speaking text: {e}")
 
+class WelcomePage(ft.Column):
+    def __init__(self, switch_to_main):
+        super().__init__(
+            alignment=ft.MainAxisAlignment.CENTER,  
+            horizontal_alignment=ft.CrossAxisAlignment.CENTER  
+        )
+        self.switch_to_main = switch_to_main
+        
+        stack = ft.Stack(
+            controls=[
+                ft.Container(
+                    content=ft.Column(
+                        controls=[
+                            ft.Text(
+                                "T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲",
+                                size=30,
+                                weight=ft.FontWeight.BOLD,
+                                color="#c2926a",
+                                text_align=ft.TextAlign.CENTER,
+                                font_family="Roboto"
+                            ),
+                            ft.Container(height=20),  
+                            ft.ElevatedButton(
+                                text="Start",
+                                bgcolor="#c2926a",
+                                color="#ffffff",
+                                on_click=self.handle_start,
+                                width=200,
+                                height=50,
+                            )
+                        ],
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        spacing=0,
+                    ),
+                    alignment=ft.alignment.center,
+                    expand=True
+                )
+            ],
+            expand=True
+        )
+
+        self.controls = [stack]
+    
+    def handle_start(self, e):
+        self.switch_to_main()
 class MainContentArea(ft.Container):
     def __init__(self, dark_mode=False) -> None:
         super().__init__(
-            width=600,
             expand=True,
             bgcolor="#d5cdc4",
             border_radius=15,
-            padding=20,
-            margin=ft.margin.symmetric(vertical=10),
+            padding=10,
+            margin=ft.margin.symmetric(vertical=5, horizontal=10),
             border=ft.border.all(1, "#c2926a"),
         )
         self.dark_mode = dark_mode
         self.chat = ft.ListView(
             expand=True,
-            spacing=15,
+            spacing=10,
             auto_scroll=True,
-            height=400
+            height=200
         )
         self.content = self.chat
 
@@ -156,20 +233,32 @@ class MainContentArea(ft.Container):
 
 class CreateMessage(ft.Column):
     def __init__(self, name: str, message: str, lang: str, spoken_text: str, dark_mode=False) -> None:
-        super().__init__(spacing=5)
+        super().__init__(spacing=3)
         self.name = name
         self.message = message
         self.lang = lang
         self.spoken_text = spoken_text
         self.text_color = "#ffffff" if dark_mode else "#000000"
-        self.text = ft.Text(self.message, color=self.text_color, size=14, selectable=True)
+        
+        label_color = "#2196F3" if name == "You:" else "#9C27B0"
+        
+        self.text = ft.Text(
+            self.message, 
+            color=self.text_color, 
+            size=14, 
+            selectable=True,
+            width=None,
+            max_lines=None
+        )
         
         self.controls = [
-            ft.Text(self.name, 
-                   size=16,
-                   opacity=0.8,
-                   color=self.text_color,
-                   weight=ft.FontWeight.BOLD),
+            ft.Text(
+                self.name, 
+                size=16,
+                opacity=1.0,
+                color=label_color,
+                weight=ft.FontWeight.BOLD
+            ),
             self.text
         ]
 
@@ -180,7 +269,7 @@ class Prompt(ft.Column):
         self.main_area = main_area
         
         self.lang_field = ft.TextField(
-            width=400,
+            expand=True,
             height=45,
             border_width=2,
             cursor_height=20,
@@ -189,10 +278,11 @@ class Prompt(ft.Column):
             bgcolor="#ffffff",
             border_color="#c2926a",
             focused_border_color="#a06d47",
+            text_style=ft.TextStyle(color="#000000"),
         )
         
         self.text_field = ft.TextField(
-            width=400,
+            expand=True,
             height=45,
             border_color="#c2926a",
             border_width=2,
@@ -201,6 +291,8 @@ class Prompt(ft.Column):
             hint_text="Enter text to translate...",
             bgcolor="#ffffff",
             focused_border_color="#a06d47",
+            text_style=ft.TextStyle(color="#000000"),
+            multiline=True,
         )
         
         self.translate_button = ft.ElevatedButton(
@@ -208,22 +300,28 @@ class Prompt(ft.Column):
             bgcolor="#c2926a",
             color="#ffffff",
             on_click=self.run_prompt,
-            width=400,
-            height=45,
+            width=None,
+            height=35,
         )
 
         self.controls = [
-            ft.Column(
+            ft.ResponsiveRow(
                 controls=[
-                    self.lang_field,
-                    ft.Container(height=10),  
-                    self.text_field,
-                    ft.Container(height=10),  
-                    self.translate_button
+                    ft.Column(
+                        controls=[
+                            self.lang_field,
+                            ft.Container(height=5),
+                            self.text_field,
+                            ft.Container(height=5),
+                            self.translate_button
+                        ],
+                        alignment=ft.MainAxisAlignment.CENTER,
+                        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                        spacing=0,
+                        col={"sm": 12, "md": 8, "lg": 6},
+                    )
                 ],
                 alignment=ft.MainAxisAlignment.CENTER,
-                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-                spacing=0
             )
         ]
 
@@ -262,113 +360,131 @@ class Prompt(ft.Column):
 
 def main(page: ft.Page) -> None:
     page.window_width = 800
-    page.window_height = 700
-    page.padding = 20
+    page.window_height = 600
+    page.padding = 10
     page.bgcolor = "#ffffff"
     page.scroll = "auto"
     
-    appbar = ft.AppBar(
-        title=ft.Text("TRANSPEAK", size=30, weight=ft.FontWeight.BOLD),
-        center_title=True,
-        bgcolor="#c2926a",
-        actions=[
-            ft.IconButton(
-                ft.icons.WB_SUNNY_OUTLINED, 
+    page.window_resizable = True
+    page.window_maximizable = True
+    page.fonts = {
+        "Roboto": "https://github.com/google/fonts/raw/main/apache/roboto/static/Roboto-Regular.ttf"
+    }
+    
+    def switch_to_welcome():
+        page.clean()
+        page.appbar = None 
+        welcome = WelcomePage(switch_to_main)
+        page.add(welcome)
+        page.update()
+    
+    def switch_to_main():
+        page.clean()
+        
+        appbar = ft.AppBar(
+            center_title=True,
+            bgcolor="#c2926a",
+            toolbar_height=50,
+            leading=ft.IconButton(
+                ft.icons.WB_SUNNY_OUTLINED,
                 on_click=lambda e: toggle_theme(page, appbar, main_area),
                 icon_color="#ffffff"
             ),
-            ft.PopupMenuButton(
-                items=[
-                    ft.PopupMenuItem(text="Log Out", on_click=lambda e: logout_action()),
-                ]
+            actions=[
+                ft.PopupMenuButton(
+                    items=[
+                        ft.PopupMenuItem(text="Log Out", on_click=lambda e: switch_to_welcome()),
+                    ]
+                ),
+            ],
+        )
+
+        main_area = MainContentArea()
+
+        title_container = ft.Container(
+            content=ft.Text(
+                "T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲",
+                size=30,
+                weight=ft.FontWeight.BOLD,
+                color="#c2926a",
+                text_align=ft.TextAlign.CENTER,
+                font_family="Roboto"
             ),
-        ],
-    )
+            margin=ft.margin.only(bottom=5, top=5),
+            alignment=ft.alignment.center
+        )
 
-    main_area = MainContentArea()
-    prompt = Prompt(appbar=appbar, main_area=main_area)
+        footer = ft.Container(
+            content=ft.Column(
+                controls=[
+                    ft.Text(
+                        "© 2025 TranSpeak. All Rights Reserved.",
+                        size=12,
+                        weight=ft.FontWeight.BOLD,
+                        color="#666666",
+                        text_align=ft.TextAlign.CENTER
+                    ),
+                    ft.Text(
+                        "Developed by Janet Bulao",
+                        size=12,
+                        color="#666666",
+                        text_align=ft.TextAlign.CENTER
+                    ),
+                    ft.Text(
+                        "Cavite State University - Bacoor City Campus",
+                        size=12,
+                        color="#666666",
+text_align=ft.TextAlign.CENTER
+                    )
+                ],
+                horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                spacing=2
+            ),
+            padding=5,
+            margin=ft.margin.only(top=20)
+        )
 
-    title_container = ft.Container(
-        content=ft.Text(
-            "T̲̲r̲a̲̲n̲̲S̲̲p̲̲e̲a̲̲k̲",
-            size=40,
-            weight=ft.FontWeight.BOLD,
-            color="#c2926a",
-            text_align=ft.TextAlign.CENTER,
-        ),
-        margin=ft.margin.only(bottom=10, top=10),
-        alignment=ft.alignment.center
-    )
+        prompt = Prompt(appbar=appbar, main_area=main_area)
 
-    input_container = ft.Container(
-        content=prompt,
-        margin=ft.margin.only(top=10, bottom=10),
-        padding=10,
-        bgcolor="#f0f0f0",
-        border_radius=10,
-        border=ft.border.all(1, "#c2926a")
-    )
-
-    footer = ft.Container(
-        content=ft.Column(
+        content = ft.ResponsiveRow(
             controls=[
-                ft.Text(
-                    "© 2025 TranSpeak. All Rights Reserved.",
-                    size=14,
-                    weight=ft.FontWeight.BOLD,
-                    color="#666666"
-                ),
-                ft.Text(
-                    "Developed by Janet Bulao",
-                    size=14,
-                    color="#666666"
-                ),
-                ft.Text(
-                    "Cavite State University - Bacoor City Campus",
-                    size=14,
-                    color="#666666"
+                ft.Column(
+                    controls=[
+                        title_container,
+                        main_area,
+                        prompt,
+                        footer
+                    ],
+                    horizontal_alignment=ft.CrossAxisAlignment.CENTER,
+                    spacing=5,
+                    scroll=ft.ScrollMode.AUTO,
+                    col={"sm": 12, "md": 12, "lg": 12}
                 )
             ],
-            horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-            spacing=5
-        ),
-        padding=15,
-        margin=ft.margin.only(top=10)
-    )
+            alignment=ft.MainAxisAlignment.CENTER,
+        )
 
-    content = ft.Column(
-        controls=[
-            title_container,
-            main_area,
-            input_container,
-            footer
-        ],
-        horizontal_alignment=ft.CrossAxisAlignment.CENTER,
-        spacing=10,
-        scroll=ft.ScrollMode.AUTO
-    )
-
-    page.appbar = appbar
-    page.add(content)
-    page.update()
+        page.appbar = appbar
+        page.add(content)
+        page.update()
+    
+    # welcome page
+    switch_to_welcome()
 
 def toggle_theme(page, appbar, main_area):
     if page.theme_mode == "light":
         page.theme_mode = "dark"
         page.bgcolor = "#1a1a1a"
         appbar.bgcolor = "#2d2d2d"
-        appbar.actions[0].icon = ft.icons.WB_SUNNY_OUTLINED
+        appbar.leading.icon = ft.icons.WB_SUNNY_OUTLINED
     else:
         page.theme_mode = "light"
         page.bgcolor = "#ffffff"
         appbar.bgcolor = "#c2926a"
-        appbar.actions[0].icon = ft.icons.BRIGHTNESS_2_OUTLINED
+        appbar.leading.icon = ft.icons.BRIGHTNESS_2_OUTLINED
 
     main_area.set_dark_mode(page.theme_mode == "dark")
     page.update()
-
-def logout_action():
-    print("Logout action triggered.")
 
 if __name__ == "__main__":
     ft.app(target=main, view=ft.AppView.WEB_BROWSER)
